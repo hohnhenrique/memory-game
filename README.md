@@ -1,29 +1,31 @@
-# Jogo da Memória
+# Memory Game
 
-Implementação do clássico Jogo da Memória em **JavaScript puro**, sem frameworks ou dependências externas. Tema visual inspirado em terminais de reconhecimento retrô — mesma identidade visual do [Campo Minado](https://github.com/).
+https://hohnhenrique.github.io/memory-game
 
-🎮 [Jogar online](#) — *substitua pelo link do GitHub Pages após o deploy*
+Implementation of the classic Memory Game in **vanilla JavaScript**, with no frameworks or external dependencies. Visual theme inspired by retro recognition terminals — the same visual identity as [Minesweeper](https://github.com/).
 
-## Funcionalidades
+🎮 [Play online](#) — *replace with the GitHub Pages link after deploy*
 
-- Três níveis de dificuldade: fácil (4×4, 8 pares), médio (6×6, 18 pares) e difícil (6×10, 30 pares)
-- Animação de flip 3D nas cartas via CSS `transform: rotateY`
-- Embaralhamento com algoritmo Fisher-Yates
-- Símbolos únicos com cor exclusiva por par, facilitando o reconhecimento visual
-- Contador de jogadas e progresso de pares encontrados
-- Bloqueio de clique durante a animação de não-par (evita clicar rápido para trapacear)
-- Totalmente navegável por teclado (Tab para mover entre cartas, Enter/Espaço para virar)
-- Responsivo e com suporte a `prefers-reduced-motion`
+## Features
 
-## Tecnologias
+- Three difficulty levels: easy (4×4, 8 pairs), medium (6×6, 18 pairs) and hard (6×10, 30 pairs)
+- 3D flip animation on cards via CSS `transform: rotateY`
+- Shuffling with the Fisher-Yates algorithm
+- Unique symbols with an exclusive color per pair, making visual recognition easier
+- Move counter and matched pairs progress
+- Click lock during the non-match animation (prevents fast clicking to cheat)
+- Fully keyboard navigable (Tab to move between cards, Enter/Space to flip)
+- Responsive, with `prefers-reduced-motion` support
+
+## Technologies
 
 - HTML5
-- CSS3 (variáveis CSS, grid layout, `transform`, `perspective`)
-- JavaScript (ES6+, sem bibliotecas)
+- CSS3 (CSS variables, grid layout, `transform`, `perspective`)
+- JavaScript (ES6+, no libraries)
 
-## Como rodar localmente
+## How to run locally
 
-Não há etapa de build. Basta abrir o arquivo `index.html` no navegador, ou rodar um servidor local simples:
+There is no build step. Just open the `index.html` file in the browser, or run a simple local server:
 
 ```bash
 # Python
@@ -33,35 +35,35 @@ python3 -m http.server 8000
 npx serve .
 ```
 
-Depois acesse `http://localhost:8000`.
+Then access `http://localhost:8000`.
 
-## Estrutura do projeto
+## Project structure
 
 ```
 memory-game/
-├── index.html   # estrutura da página
-├── style.css    # estilos e tema visual
-├── script.js    # lógica do jogo
+├── index.html   # page structure
+├── style.css    # styles and visual theme
+├── script.js    # game logic
 └── README.md
 ```
 
-## Lógica do jogo
+## Game logic
 
-A lógica principal está em `script.js` e cobre:
+The core logic is in `script.js` and covers:
 
-- **Geração do baralho**: `pairs` símbolos únicos são selecionados aleatoriamente de um pool de 30, duplicados e embaralhados com Fisher-Yates
-- **Flip e comparação**: ao virar duas cartas, o jogo compara os símbolos; se iguais, marca como encontradas; se diferentes, vira de volta após 900ms
-- **Bloqueio de clique**: a variável `locked` impede interação enquanto a animação de não-par está em andamento
-- **Condição de vitória**: quando `matched === totalPairs`, o overlay de parabéns é exibido
+- **Deck generation**: `pairs` unique symbols are randomly selected from a pool of 30, duplicated and shuffled with Fisher-Yates
+- **Flip and comparison**: when two cards are flipped, the game compares the symbols; if they match, they're marked as found; if not, they flip back after 900ms
+- **Click lock**: the `locked` variable prevents interaction while the non-match animation is in progress
+- **Win condition**: when `matched === totalPairs`, the congratulations overlay is shown
 
-## Possíveis melhorias futuras
+## Possible future improvements
 
-- Cronômetro por partida e ranking de melhores tempos
-- Modo com imagens no lugar de símbolos (ex: bandeiras de países, escudos de times)
-- Animação de "shake" nas cartas que não formaram par
-- Dificuldade customizável (número de pares definido pelo usuário)
+- Per-match timer and best times ranking
+- Mode with images instead of symbols (e.g. country flags, team badges)
+- "Shake" animation on cards that didn't form a pair
+- Customizable difficulty (number of pairs defined by the user)
 
-## Licença
+## License
 
-Livre para uso e modificação.
+Free to use and modify.
 # memory-game
