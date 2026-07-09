@@ -1,7 +1,5 @@
 # Memory Game
 
-https://hohnhenrique.github.io/memory-game
-
 A classic Memory Game built with **vanilla JavaScript** — no frameworks, no dependencies. Visual theme inspired by retro recognition terminals, matching the identity of the [Minesweeper](https://github.com/) project.
 
 🎮 [Play online](#) — *replace with your GitHub Pages link after deploy*

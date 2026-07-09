@@ -3,8 +3,8 @@
  * — Nome do jogador obrigatório antes de jogar
  * — Cronômetro por partida
  * — Sistema de pontuação com bônus de velocidade e penalidade por erro
- * — Ranking top 10 compartilhado via JSONBin.io
- * — Fallback para localStorage se JSONBin estiver indisponível
+ * — Ranking top 10 compartilhado via JSONBin.io (sem fallback local)
+ * — Botão de recarregar ranking
  */
 
 (() => {
@@ -29,25 +29,18 @@
 
   const MAX_RANKING     = 10;
   const PLAYER_KEY      = "memory_player";
-  const FALLBACK_KEY    = "memory_ranking_fallback";
   const DIFFICULTY_MULT = { easy: 1, medium: 2, hard: 3 };
 
-  // ─── JSONBin ────────────────────────────────────────────────────────────
+  // ─── JSONBin ─────────────────────────────────────────────
   const JSONBIN = {
     BIN_ID:     "6a4ed01af5f4af5e29747381",
     ACCESS_KEY: "$2a$10$fvHqidvfnUG1xDfPs0hciOxkzypjaByzNrHwGJ53s0q4vPvu2innK",
     get URL()  { return `https://api.jsonbin.io/v3/b/${this.BIN_ID}`; },
   };
-  // ────────────────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────
 
   // ---------- pontuação ----------
 
-  /**
-   * base       = pares × 100 × multiplicador
-   * bônus      = max(0, 300 − segundos) × multiplicador  (velocidade)
-   * penalidade = erros × 15 × multiplicador
-   * erros      = jogadas além do mínimo ideal (1 jogada por par)
-   */
   function calcScore(lvl, pairs, seconds, moves) {
     const mult    = DIFFICULTY_MULT[lvl] || 1;
     const base    = pairs * 100 * mult;
@@ -83,7 +76,7 @@
   const statsPanel       = document.getElementById("stats-panel");
   const statsTabs        = document.querySelectorAll(".stats-tab");
   const statsContent     = document.getElementById("stats-content");
-  const statsClearBtn    = document.getElementById("stats-clear-btn");
+  const statsRefreshBtn  = document.getElementById("stats-refresh-btn");
 
   // ---------- estado ----------
 
@@ -100,55 +93,36 @@
   let gameRunning    = false;
   let statsTab       = "easy";
 
-  // ---------- jogador ----------
+  // ---------- jogador (localStorage só para o nome) ----------
 
   function loadPlayer() { return localStorage.getItem(PLAYER_KEY) || ""; }
   function savePlayer(name) { localStorage.setItem(PLAYER_KEY, name); }
 
-  // ---------- ranking — JSONBin com fallback localStorage ----------
+  // ---------- ranking — JSONBin exclusivo ----------
 
   const EMPTY_RANKING = () => ({ easy: [], medium: [], hard: [] });
 
   async function loadRanking() {
-    try {
-      const res = await fetch(JSONBIN.URL, {
-        headers: { "X-Access-Key": JSONBIN.ACCESS_KEY },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      return data.record || EMPTY_RANKING();
-    } catch (err) {
-      console.warn("[ranking] JSONBin indisponível, usando fallback local.", err.message);
-      try {
-        const raw = localStorage.getItem(FALLBACK_KEY);
-        return raw ? JSON.parse(raw) : EMPTY_RANKING();
-      } catch {
-        return EMPTY_RANKING();
-      }
-    }
+    const res = await fetch(JSONBIN.URL, {
+      headers: { "X-Access-Key": JSONBIN.ACCESS_KEY },
+    });
+    if (!res.ok) throw new Error(`JSONBin GET falhou: HTTP ${res.status}`);
+    const data = await res.json();
+    return data.record || EMPTY_RANKING();
   }
 
   async function saveRanking(ranking) {
-    try {
-      const res = await fetch(JSONBIN.URL, {
-        method:  "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Access-Key": JSONBIN.ACCESS_KEY,
-        },
-        body: JSON.stringify(ranking),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    } catch (err) {
-      console.warn("[ranking] Falha ao salvar no JSONBin, salvando localmente.", err.message);
-      localStorage.setItem(FALLBACK_KEY, JSON.stringify(ranking));
-    }
+    const res = await fetch(JSONBIN.URL, {
+      method:  "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Access-Key": JSONBIN.ACCESS_KEY,
+      },
+      body: JSON.stringify(ranking),
+    });
+    if (!res.ok) throw new Error(`JSONBin PUT falhou: HTTP ${res.status}`);
   }
 
-  /**
-   * Insere entrada, ordena por pontuação (desc), desempate por tempo (asc),
-   * mantém top 10. Retorna { position, isRecord }.
-   */
   async function addToRanking(lvl, entry) {
     const ranking  = await loadRanking();
     const list     = ranking[lvl] || [];
@@ -172,10 +146,6 @@
     await saveRanking(ranking);
 
     return { position, isRecord };
-  }
-
-  async function clearRanking() {
-    await saveRanking(EMPTY_RANKING());
   }
 
   // ---------- cronômetro ----------
@@ -208,10 +178,10 @@
   // ---------- modal de jogador ----------
 
   function showPlayerModal() {
-    playerInputEl.value    = currentPlayer || "";
+    playerInputEl.value       = currentPlayer || "";
     playerErrorEl.textContent = "";
     playerOverlayEl.classList.add("is-visible");
-    setTimeout(() => playerInputEl.focus(), 100);
+    setTimeout(() => playerInputEl.focus(), 150);
   }
 
   function hidePlayerModal() {
@@ -364,16 +334,18 @@
       date: new Date().toLocaleDateString("pt-BR"),
     };
 
-    // mostra overlay imediatamente com os dados locais,
-    // depois salva no JSONBin em segundo plano
+    // mostra overlay imediatamente enquanto salva
     showWinOverlay(entry, null, false);
 
-    const { position, isRecord } = await addToRanking(level, entry);
-
-    // atualiza overlay com posição real após salvar
-    showWinOverlay(entry, position, isRecord);
-
-    if (!statsPanel.hidden) { renderStats(); }
+    try {
+      const { position, isRecord } = await addToRanking(level, entry);
+      showWinOverlay(entry, position, isRecord);
+      if (!statsPanel.hidden) { renderStats(); }
+    } catch (err) {
+      console.error("[ranking] Erro ao salvar:", err);
+      // atualiza overlay com mensagem de erro na posição
+      showWinOverlay(entry, -1, false);
+    }
   }
 
   // ---------- overlay de vitória ----------
@@ -382,9 +354,14 @@
     winMessageEl.textContent = "PARABÉNS";
     winDetailEl.textContent  = `${currentPlayer}, você completou em ${formatTime(entry.seconds)}!`;
 
-    const posText = position === null
-      ? `<span style="color:var(--phosphor-dim)">salvando...</span>`
-      : `<span class="${position <= 3 ? "is-record" : ""}">${position}º no ranking</span>`;
+    let posText;
+    if (position === null) {
+      posText = `<span style="color:var(--phosphor-dim)">salvando...</span>`;
+    } else if (position === -1) {
+      posText = `<span style="color:#ff4d4d">erro ao salvar</span>`;
+    } else {
+      posText = `<span class="${position <= 3 ? "is-record" : ""}">${position}º no ranking</span>`;
+    }
 
     winRecordEl.innerHTML = `
       <p><span>pontuação</span>   <span class="is-record">${entry.score.toLocaleString("pt-BR")} pts</span></p>
@@ -409,8 +386,17 @@
 
   async function renderStats() {
     statsContent.innerHTML = `<p class="stats-empty">carregando...</p>`;
-    const ranking = await loadRanking();
-    const list    = ranking[statsTab] || [];
+
+    let ranking;
+    try {
+      ranking = await loadRanking();
+    } catch (err) {
+      console.error("[ranking] Erro ao carregar:", err);
+      statsContent.innerHTML = `<p class="stats-empty">erro ao carregar — tente novamente</p>`;
+      return;
+    }
+
+    const list = ranking[statsTab] || [];
 
     if (list.length === 0) {
       statsContent.innerHTML = `<p class="stats-empty">nenhuma partida registrada</p>`;
@@ -449,6 +435,19 @@
       </table>`;
   }
 
+  async function refreshStats() {
+    // animação de giro no botão
+    statsRefreshBtn.classList.remove("is-spinning");
+    void statsRefreshBtn.offsetWidth; // força reflow para reiniciar animação
+    statsRefreshBtn.classList.add("is-spinning");
+    statsRefreshBtn.disabled = true;
+
+    await renderStats();
+
+    statsRefreshBtn.disabled = false;
+    setTimeout(() => statsRefreshBtn.classList.remove("is-spinning"), 600);
+  }
+
   function escapeHtml(str) {
     return str
       .replace(/&/g, "&amp;")
@@ -485,6 +484,7 @@
   });
 
   statsToggleBtn.addEventListener("click", toggleStats);
+  statsRefreshBtn.addEventListener("click", refreshStats);
 
   statsTabs.forEach(tab => {
     tab.addEventListener("click", () => {
@@ -493,13 +493,6 @@
       statsTab = tab.dataset.level;
       renderStats();
     });
-  });
-
-  statsClearBtn.addEventListener("click", async () => {
-    if (confirm("Limpar todo o ranking? Esta ação não pode ser desfeita.")) {
-      await clearRanking();
-      renderStats();
-    }
   });
 
   // ---------- boot ----------

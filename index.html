@@ -16,7 +16,7 @@
         MEMÓRIA
         <span class="console__bracket">]</span>
       </div>
-      <p class="console__subtitle">teste de reconhecimento // v2.0</p>
+      <p class="console__subtitle">teste de reconhecimento // v3.0</p>
     </header>
 
     <!-- jogador ativo -->
@@ -32,9 +32,7 @@
         <span class="hud__label">tempo</span>
         <span class="hud__value" id="timer">00:00</span>
       </div>
-
       <button class="hud__reset" id="reset-btn" aria-label="reiniciar jogo" title="reiniciar">↺</button>
-
       <div class="hud__stat">
         <span class="hud__label">jogadas</span>
         <span class="hud__value" id="moves">000</span>
@@ -55,20 +53,22 @@
 
     <p class="status-line" id="status-line">encontre todos os pares</p>
 
-    <!-- botão estatísticas -->
+    <!-- ranking toggle -->
     <div class="stats-toggle-row">
       <button class="stats-toggle-btn" id="stats-toggle-btn">▸ ranking</button>
     </div>
 
-    <!-- painel de estatísticas -->
+    <!-- painel de ranking -->
     <section class="stats-panel" id="stats-panel" hidden>
-      <div class="stats-panel__tabs">
-        <button class="stats-tab is-active" data-level="easy">fácil</button>
-        <button class="stats-tab" data-level="medium">médio</button>
-        <button class="stats-tab" data-level="hard">difícil</button>
+      <div class="stats-panel__header">
+        <div class="stats-panel__tabs">
+          <button class="stats-tab is-active" data-level="easy">fácil</button>
+          <button class="stats-tab" data-level="medium">médio</button>
+          <button class="stats-tab" data-level="hard">difícil</button>
+        </div>
+        <button class="stats-refresh-btn" id="stats-refresh-btn" title="recarregar ranking" aria-label="recarregar ranking">↻</button>
       </div>
       <div class="stats-panel__content" id="stats-content"></div>
-      <button class="stats-clear-btn" id="stats-clear-btn">limpar ranking</button>
     </section>
 
     <footer class="console__footer">
