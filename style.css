@@ -25,10 +25,10 @@
   --c5: #ff8f5f; --c6: #5ffff0; --c7: #ff4d4d; --c8: #ffffff;
   --c9: #ffd700; --c10: #ff69b4;
 
-  /* tamanhos de carta por dificuldade — ajustados via JS também */
-  --card-easy:   clamp(52px, 18vw, 72px);
-  --card-medium: clamp(42px, 13vw, 62px);
-  --card-hard:   clamp(32px,  9vw, 52px);
+  /* gap do grid por dificuldade */
+  --gap-easy:   clamp(4px, 1.5vw, 8px);
+  --gap-medium: clamp(3px, 1.2vw, 6px);
+  --gap-hard:   clamp(2px, 0.8vw, 4px);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -172,25 +172,33 @@ body {
 .board-wrapper {
   display: flex; justify-content: center;
   margin-bottom: 12px;
-  overflow-x: auto;
-  /* scroll suave em iOS */
-  -webkit-overflow-scrolling: touch;
+  /* sem overflow: o grid se adapta à largura */
+  overflow: hidden;
+  width: 100%;
 }
 
-.board { display: grid; gap: clamp(4px, 1.5vw, 8px); padding: 4px; }
+.board {
+  display: grid;
+  /* largura ocupa 100% do wrapper; colunas via JS com 1fr */
+  width: 100%;
+  gap: var(--gap-easy);
+  padding: 4px;
+}
+
+.board[data-level="medium"] { gap: var(--gap-medium); }
+.board[data-level="hard"]   { gap: var(--gap-hard); }
 
 /* ── carta ── */
+/* As cartas NÃO têm width/height fixos.
+   O grid com 1fr distribui o espaço igualmente.
+   aspect-ratio garante que sejam quadradas. */
 .card {
   position: relative; cursor: pointer;
   perspective: 600px;
-  /* tamanho via variável, sobrescrito por data-level no JS */
-  width: var(--card-easy);
-  height: var(--card-easy);
+  width: 100%;
+  aspect-ratio: 1 / 1;
   touch-action: manipulation;
 }
-
-.board[data-level="medium"] .card { width: var(--card-medium); height: var(--card-medium); }
-.board[data-level="hard"]   .card { width: var(--card-hard);   height: var(--card-hard);   }
 
 .card__inner {
   position: absolute; inset: 0;
@@ -218,11 +226,13 @@ body {
   background: var(--bg-cell-revealed);
   border: 1px solid var(--line-bright);
   transform: rotateY(180deg);
-  font-size: clamp(18px, 6vw, 28px);
+  /* font-size relativo ao tamanho da própria carta via container query fallback */
+  font-size: clamp(14px, 4.5vw, 28px);
 }
 
-.board[data-level="medium"] .card__front { font-size: clamp(14px, 5vw, 24px); }
-.board[data-level="hard"]   .card__front { font-size: clamp(11px, 4vw, 20px); }
+/* no médio e difícil as cartas são menores → emoji menor */
+.board[data-level="medium"] .card__front { font-size: clamp(11px, 3.5vw, 22px); }
+.board[data-level="hard"]   .card__front { font-size: clamp(8px,  2.5vw, 16px); }
 
 .card.is-matched .card__front {
   border-color: var(--phosphor-dim);
